@@ -1,57 +1,87 @@
-'use strict';
+"use strict";
+import {
+  BOARD_SIZE,
+  INITIAL_TILES,
+  RARE_INITIAL_TILES,
+  WIN_VALUE,
+  MATRIX,
+} from "../constants/game.config.js";
 
-/**
- * This class represents the game.
- * Now it has a basic structure, that is needed for testing.
- * Feel free to add more props and methods if needed.
- */
 class Game {
-  constructor(
-    initialState = [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-    ],
-  ) {
+  constructor(initialState = MATRIX) {
     this.board = initialState;
     this.score = 0;
+    this.newTile = null;
+    this.mergedTiles = [];
+
+    this.field = document.querySelector(".game-field");
+
+    if (!this.field) {
+      throw new Error("Не знайдено елемент .game-field в DOM!");
+    }
+
+    this.initBoard();
+    this.renderBoard();
   }
 
   filterZero(row) {
     return row.filter((num) => num !== 0);
   }
 
-  renderBoard() {
-    const cells = document.querySelectorAll('.game-field td');
+  initBoard() {
+    this.cells = [];
+    this.field.innerHTML = "";
 
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
-        const index = row * 4 + col;
-        const cell = cells[index];
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      this.cells[row] = [];
+
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        const cell = document.createElement("div");
+
+        cell.classList.add("field-cell");
+        this.field.appendChild(cell);
+        this.cells[row][col] = cell;
+      }
+    }
+  }
+
+  renderBoard() {
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        const cell = this.cells[row][col];
         const value = this.board[row][col];
 
-        cell.classList = 'field-cell';
+        cell.textContent = value || "";
+        cell.className = `field-cell${value ? ` field-cell--${value}` : ""}`;
 
-        if (value === 0) {
-          cell.textContent = '';
-        } else {
-          cell.textContent = value;
-          cell.classList.add(`field-cell--${value}`);
+        if (
+          this.newTile &&
+          this.newTile.row === row &&
+          this.newTile.col === col
+        ) {
+          cell.classList.add("field-cell--new");
+
+          cell.addEventListener(
+            "animationend",
+            () => cell.classList.remove("field-cell--new"),
+            { once: true },
+          );
         }
       }
     }
 
-    const scoreNumber = document.querySelector('.game-score');
+    const scoreEl = document.querySelector(".game-score");
 
-    scoreNumber.textContent = `${this.score}`;
+    if (scoreEl) {
+      scoreEl.textContent = String(this.score);
+    }
   }
 
   spawnNumber() {
     const emptyCells = [];
 
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
         if (this.board[row][col] === 0) {
           emptyCells.push({ row, col });
         }
@@ -63,43 +93,52 @@ class Game {
     }
 
     const randCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-    const numberToSpawn = Math.random() < 0.1 ? 4 : 2;
+    const numberToSpawn =
+      Math.random() < 0.1 ? RARE_INITIAL_TILES : INITIAL_TILES;
 
     this.board[randCell.row][randCell.col] = numberToSpawn;
+    this.newTile = randCell;
     this.renderBoard();
+    this.newTile = null;
   }
 
   isGameOver() {
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
-        if (this.board[row][col] === 2048) {
-          return 'win';
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        if (this.board[row][col] === WIN_VALUE) {
+          return "win";
         }
       }
     }
 
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 4; col++) {
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
         if (this.board[row][col] === 0) {
-          return 'playing';
+          return "playing";
         }
 
-        if (col < 3 && this.board[row][col] === this.board[row][col + 1]) {
-          return 'playing';
+        if (
+          col < BOARD_SIZE - 1 &&
+          this.board[row][col] === this.board[row][col + 1]
+        ) {
+          return "playing";
         }
 
-        if (row < 3 && this.board[row][col] === this.board[row + 1][col]) {
-          return 'playing';
+        if (
+          row < BOARD_SIZE - 1 &&
+          this.board[row][col] === this.board[row + 1][col]
+        ) {
+          return "playing";
         }
       }
     }
 
-    return 'lose';
+    return "lose";
   }
 
   boardsAreEqual(board1, board2) {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      for (let j = 0; j < BOARD_SIZE; j++) {
         if (board1[i][j] !== board2[i][j]) {
           return false;
         }
@@ -112,7 +151,7 @@ class Game {
   moveLeft() {
     const prevBoard = JSON.parse(JSON.stringify(this.board));
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < BOARD_SIZE; i++) {
       let row = this.board[i];
 
       row = this.filterZero(row);
@@ -122,11 +161,12 @@ class Game {
           row[j] *= 2;
           row[j + 1] = 0;
           this.score += row[j];
+          this.mergedTiles.push({ row: i, col: j });
         }
       }
       row = this.filterZero(row);
 
-      while (row.length < 4) {
+      while (row.length < BOARD_SIZE) {
         row.push(0);
       }
       this.board[i] = row;
@@ -142,7 +182,7 @@ class Game {
   moveRight() {
     const prevBoard = JSON.parse(JSON.stringify(this.board));
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < BOARD_SIZE; i++) {
       let row = this.board[i].reverse();
 
       row = this.filterZero(row);
@@ -152,11 +192,16 @@ class Game {
           row[j] *= 2;
           row[j + 1] = 0;
           this.score += row[j];
+
+          this.mergedTiles.push({
+            row: i,
+            col: 3 - j,
+          });
         }
       }
       row = this.filterZero(row);
 
-      while (row.length < 4) {
+      while (row.length < BOARD_SIZE) {
         row.push(0);
       }
       this.board[i] = row.reverse();
@@ -172,12 +217,15 @@ class Game {
   moveUp() {
     const prevBoard = JSON.parse(JSON.stringify(this.board));
 
-    for (let col = 0; col < 4; col++) {
+    this.mergedTiles = [];
+
+    for (let col = 0; col < BOARD_SIZE; col++) {
       let column = [];
 
-      for (let row = 0; row < 4; row++) {
+      for (let row = 0; row < BOARD_SIZE; row++) {
         column.push(this.board[row][col]);
       }
+
       column = this.filterZero(column);
 
       for (let i = 0; i < column.length - 1; i++) {
@@ -185,35 +233,46 @@ class Game {
           column[i] *= 2;
           column[i + 1] = 0;
           this.score += column[i];
+
+          this.mergedTiles.push({
+            row: i,
+            col: col,
+          });
         }
       }
+
       column = this.filterZero(column);
 
-      while (column.length < 4) {
+      while (column.length < BOARD_SIZE) {
         column.push(0);
       }
 
-      for (let row = 0; row < 4; row++) {
+      for (let row = 0; row < BOARD_SIZE; row++) {
         this.board[row][col] = column[row];
       }
     }
+
     this.renderBoard();
 
     if (!this.boardsAreEqual(prevBoard, this.board)) {
       this.spawnNumber();
     }
+
     this.checkGameStatus();
   }
 
   moveDown() {
     const prevBoard = JSON.parse(JSON.stringify(this.board));
 
-    for (let col = 0; col < 4; col++) {
+    this.mergedTiles = [];
+
+    for (let col = 0; col < BOARD_SIZE; col++) {
       let column = [];
 
-      for (let row = 0; row < 4; row++) {
+      for (let row = 0; row < BOARD_SIZE; row++) {
         column.push(this.board[row][col]);
       }
+
       column = this.filterZero(column);
       column.reverse();
 
@@ -222,24 +281,33 @@ class Game {
           column[i] *= 2;
           column[i + 1] = 0;
           this.score += column[i];
+
+          this.mergedTiles.push({
+            row: 3 - i,
+            col: col,
+          });
         }
       }
+
       column = this.filterZero(column);
 
-      while (column.length < 4) {
+      while (column.length < BOARD_SIZE) {
         column.push(0);
       }
+
       column.reverse();
 
-      for (let row = 0; row < 4; row++) {
+      for (let row = 0; row < BOARD_SIZE; row++) {
         this.board[row][col] = column[row];
       }
     }
+
     this.renderBoard();
 
     if (!this.boardsAreEqual(prevBoard, this.board)) {
       this.spawnNumber();
     }
+
     this.checkGameStatus();
   }
 
@@ -252,19 +320,20 @@ class Game {
   }
 
   getStatus() {
-    const messageContainer = document.querySelector('.message-container');
-    const visibleMessage = messageContainer.querySelector('p:not(.hidden)');
+    const messageContainer = document.querySelector(".message-container");
+    const visibleMessage = messageContainer.querySelector("p:not(.hidden)");
 
     if (visibleMessage) {
-      const mesClass = visibleMessage.classList;
+      if (visibleMessage.classList.contains("message-start")) {
+        return "idle";
+      }
 
-      switch (mesClass) {
-        case 'message message-start':
-          return 'idle';
-        case 'message message-win':
-          return 'win';
-        case 'message message-lose':
-          return 'lose';
+      if (visibleMessage.classList.contains("message-win")) {
+        return "win";
+      }
+
+      if (visibleMessage.classList.contains("message-lose")) {
+        return "lose";
       }
     } else {
       return `playing`;
@@ -274,7 +343,7 @@ class Game {
   checkGameStatus() {
     const curStatus = this.isGameOver();
 
-    if (curStatus === 'win' || curStatus === 'lose') {
+    if (curStatus === "win" || curStatus === "lose") {
       this.showMessage(curStatus);
     }
   }
@@ -282,71 +351,64 @@ class Game {
   showMessage(type) {
     const message = document.querySelector(`.message.message-${type}`);
 
-    message.classList.remove('hidden');
-    document.removeEventListener('keydown', this.boundKeyDown);
+    message.classList.remove("hidden");
+    document.removeEventListener("keydown", this.boundKeyDown);
   }
 
   start() {
-    const cells = document.querySelectorAll('.game-field td');
-    const cellIndexes = Array.from({ length: cells.length }, (_, i) => i);
-    const shuffledIndexes = cellIndexes.sort(() => 0.5 - Math.random());
-    const chosenIndexes = shuffledIndexes.slice(0, 2);
+    this.initBoard();
 
-    chosenIndexes.forEach((index) => {
-      cells[index].textContent = '2';
-      cells[index].classList.add('field-cell--2');
+    this.spawnNumber();
+    this.spawnNumber();
 
-      const rowIndex = Math.floor(index / 4);
-      const colIndex = index % 4;
+    const footerMessage = document.querySelectorAll(".message");
 
-      this.board[rowIndex][colIndex] = 2;
-    });
+    footerMessage.forEach((element) => element.classList.add("hidden"));
 
-    const footerMessage = document.querySelectorAll('.message');
-
-    footerMessage.forEach((element) => element.classList.add('hidden'));
     this.boundKeyDown = this.keyDown.bind(this);
-    document.addEventListener('keydown', this.boundKeyDown);
+    document.addEventListener("keydown", this.boundKeyDown);
   }
 
   restart() {
-    const cells = document.querySelectorAll('.game-field td');
+    for (let row = 0; row < BOARD_SIZE; row++) {
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        this.board[row][col] = 0;
 
-    cells.forEach((cell) => {
-      cell.classList = 'field-cell';
-      cell.textContent = '';
-    });
+        const cell = this.cells[row][col];
 
-    for (let row = 0; row < 4; row++) {
-      for (let column = 0; column < 4; column++) {
-        this.board[row][column] = 0;
+        cell.textContent = "";
+        cell.className = "field-cell";
       }
     }
 
-    const loseMessage = document.querySelector('.message.message-lose');
-    const startMessage = document.querySelector('.message.message-start');
-    const winMessage = document.querySelector('.message.message-win');
+    document.querySelector(".message.message-lose")?.classList.add("hidden");
+    document.querySelector(".message.message-win")?.classList.add("hidden");
+    document.querySelector(".message.message-start")?.classList.add("hidden");
+    document.removeEventListener("keydown", this.boundKeyDown);
 
-    loseMessage.classList.add('hidden');
-    winMessage.classList.add('hidden');
-    startMessage.classList.remove('hidden');
-    document.removeEventListener('keydown', this.boundKeyDown);
+    this.newTile = null;
+    this.score = 0;
+    this.renderBoard();
+    this.spawnNumber();
+    this.spawnNumber();
+    this.boundKeyDown = this.keyDown.bind(this);
+    document.addEventListener("keydown", this.boundKeyDown);
   }
 
   keyDown(e) {
     e.preventDefault();
 
     switch (e.key) {
-      case 'ArrowUp':
+      case "ArrowUp":
         this.moveUp();
         break;
-      case 'ArrowDown':
+      case "ArrowDown":
         this.moveDown();
         break;
-      case 'ArrowLeft':
+      case "ArrowLeft":
         this.moveLeft();
         break;
-      case 'ArrowRight':
+      case "ArrowRight":
         this.moveRight();
         break;
     }
@@ -354,4 +416,4 @@ class Game {
   }
 }
 
-module.exports = Game;
+export default Game;

@@ -1,25 +1,21 @@
-'use strict';
+"use strict";
 
-// Uncomment the next lines to use your game instance in the browser
-const Game = require('../modules/Game.class');
+import Game from "../modules/Game.class.js";
+
 const game = new Game();
 
-// start / restart
-const startButton = document.querySelector('button.start');
-let switcher = 0;
+const startButton = document.querySelector("button.start");
 
-startButton.addEventListener('click', (ev) => {
-  switcher++;
-
-  if (switcher % 2 === 1) {
-    startButton.classList.remove('start');
-    startButton.classList.add('restart');
-    startButton.textContent = 'Restart';
+startButton.addEventListener("click", () => {
+  if (game.getStatus() === "idle") {
+    startButton.classList.remove("start");
+    startButton.classList.add("restart");
+    startButton.textContent = "Restart";
     game.start();
   } else {
-    startButton.classList.remove('restart');
-    startButton.classList.add('start');
-    startButton.textContent = 'Start';
+    startButton.classList.remove("start");
+    startButton.classList.add("restart");
+    startButton.textContent = "Restart";
     game.restart();
   }
 });

@@ -2,15 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>2048</title>
     <link
-      rel="stylesheet"
-      href="./styles/main.scss"
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="./images/2048.png"
     />
+    <link rel="stylesheet" href="./styles/main.scss" />
   </head>
   <body>
     <div class="container">
@@ -25,37 +25,9 @@
         </div>
       </div>
 
-      <table class="game-field">
-        <tbody>
-          <tr class="field-row">
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-          </tr>
-
-          <tr class="field-row">
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-          </tr>
-
-          <tr class="field-row">
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-          </tr>
-
-          <tr class="field-row">
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-            <td class="field-cell"></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="board">
+        <div class="game-field"></div>
+      </div>
 
       <div class="message-container">
         <p class="message message-lose hidden">You lose! Restart the game?</p>
@@ -65,9 +37,6 @@
         </p>
       </div>
     </div>
-    <script
-      src="scripts/main.js"
-      type="module"
-    ></script>
+    <script src="scripts/main.js" type="module"></script>
   </body>
 </html>
